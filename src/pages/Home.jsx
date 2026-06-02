@@ -2,12 +2,14 @@
 
 import { supabase } from '../lib/supabase'
 
+import FinancialInsights from '../components/ui/FinancialInsights'
 import InvestmentCard from '../components/ui/InvestmentCard'
 import PortfolioChart from '../components/ui/PortfolioChart'
 import GoalCard from '../components/ui/GoalCard'
 import PortfolioAnalysis from '../components/ui/PortfolioAnalysis'
 import FinancialAdvisor from '../components/ui/FinancialAdvisor'
 import RealMarketCard from '../components/ui/RealMarketCard'
+import Profile from './Profile'
 
 export default function Home() {
 
@@ -15,13 +17,21 @@ export default function Home() {
 
   const fetchInvestments = async () => {
 
-    const { data, error } = await supabase
-      .from('investments')
-      .select('*')
+        const user =
+          await supabase.auth.getUser()
 
-    if (error) {
-      console.log(error)
-      return
+        const { data, error } =
+          await supabase
+            .from('investments')
+            .select('*')
+            .eq(
+              'user_id',
+              user.data.user.id
+            )
+
+          if (error) {
+            console.log(error)
+            return
     }
 
     setInvestments(data)
@@ -69,9 +79,29 @@ const monthlySavings = 500
 
     <div className="p-6">
 
-      <h1 className="text-4xl font-bold mb-6">
-        Dashboard Financiero
-      </h1>
+       <div className="flex justify-between items-center mb-6">
+
+        <h1 className="text-4xl font-bold">
+          Dashboard Financiero
+        </h1>
+
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut()
+          }}
+          className="
+            bg-red-500
+            hover:bg-red-600
+            px-5
+            py-3
+            rounded-2xl
+            font-semibold
+          "
+        >
+          Logout
+        </button>
+
+      </div>
       
       <div className="grid md:grid-cols-3 gap-4 mb-6">
 
@@ -147,24 +177,35 @@ const monthlySavings = 500
         </div>
 
       </div>
+      
+      <Profile />
 
       <div className="mb-6">
         <PortfolioChart investments={investments} />
       </div>
       <div className="mb-6">
 
-        <PortfolioAnalysis
-          investments={investments}
-        />
-        <div className="mb-6">
+  <PortfolioAnalysis
+    investments={investments}
+  />
 
-          <FinancialAdvisor
-            investments={investments}
-          />
+</div>
 
-        </div>
+<div className="mb-6">
 
-      </div>
+  <FinancialAdvisor
+    investments={investments}
+  />
+
+</div>
+
+<div className="mb-6">
+
+  <FinancialInsights
+    investments={investments}
+  />
+
+</div>
       <div className="mb-6">
 
   <GoalCard

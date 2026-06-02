@@ -16,14 +16,18 @@ export default function AddInvestment() {
     const { error } = await supabase
       .from('investments')
       .insert([
-        {
-          title,
-          amount,
-          currency,
-          platform,
-          category
-        }
-      ])
+       {
+        title,
+        amount,
+        currency,
+        platform,
+        category,
+        user_id:
+          (
+            await supabase.auth.getUser()
+          ).data.user.id
+      }
+       ])
 
     if (error) {
       alert('Error al guardar')
