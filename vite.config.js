@@ -1,9 +1,6 @@
  import { defineConfig } from 'vite'
-
 import react from '@vitejs/plugin-react'
-
-import { VitePWA }
-from 'vite-plugin-pwa'
+import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
 
@@ -12,17 +9,15 @@ export default defineConfig({
     react(),
 
     VitePWA({
-
       registerType: 'autoUpdate',
 
       manifest: {
-
         name: 'Control Inversiones',
 
         short_name: 'Inversiones',
 
         description:
-          'Dashboard financiero personal',
+          'Dashboard financiero inteligente',
 
         theme_color: '#0f172a',
 
@@ -31,23 +26,18 @@ export default defineConfig({
         display: 'standalone',
 
         icons: [
-
           {
             src: '/icon-192.png',
             sizes: '192x192',
             type: 'image/png'
           },
-
           {
             src: '/icon-512.png',
             sizes: '512x512',
             type: 'image/png'
           }
-
         ]
-
       }
-
     })
 
   ]

@@ -78,12 +78,12 @@ export default function InvestmentCard({
         bg-slate-800
         rounded-3xl
         p-5
-        border-l-4
-        mb-4
+        shadow-lg
+        hover:scale-105
+        hover:shadow-2xl
+        transition-all
+        duration-300
       "
-      style={{
-        borderColor: color
-      }}
     >
 
       {!editing ? (

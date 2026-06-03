@@ -1,52 +1,94 @@
  import { useEffect, useState } from 'react'
 
+import { getDollarRate }
+from '../services/dollarApi'
 import { supabase } from '../lib/supabase'
-
-import FinancialInsights from '../components/ui/FinancialInsights'
-import InvestmentCard from '../components/ui/InvestmentCard'
-import PortfolioChart from '../components/ui/PortfolioChart'
-import GoalCard from '../components/ui/GoalCard'
-import PortfolioAnalysis from '../components/ui/PortfolioAnalysis'
-import FinancialAdvisor from '../components/ui/FinancialAdvisor'
 import RealMarketCard from '../components/ui/RealMarketCard'
-import Profile from './Profile'
+import PortfolioChart from '../components/ui/PortfolioChart'
+import InvestmentCard from '../components/ui/InvestmentCard'
+import AddInvestment from './AddInvestment'
 
 export default function Home() {
 
-  const [investments, setInvestments] = useState([])
+const demoInvestments = [
+  {
+    id: 1,
+    title: 'VOO',
+    amount: 1000,
+    currency: 'USD',
+    category: 'ETF'
+  },
+  {
+    id: 2,
+    title: 'BTC',
+    amount: 500,
+    currency: 'USD',
+    category: 'Cripto'
+  }
+]
 
+  const [investments, setInvestments] =
+    useState(demoInvestments)
+
+  const [dollarRate, setDollarRate] =
+    useState(1300)
   const fetchInvestments = async () => {
 
-        const user =
-          await supabase.auth.getUser()
+    const user =
+      await supabase.auth.getUser()
 
-        const { data, error } =
-          await supabase
-            .from('investments')
-            .select('*')
-            .eq(
-              'user_id',
-              user.data.user.id
-            )
+    const { data, error } =
+      await supabase
+        .from('investments')
+        .select('*')
+        .eq(
+          'user_id',
+          user.data.user.id
+        )
 
-          if (error) {
-            console.log(error)
-            return
+    if (error) {
+      console.log(error)
+      return
     }
 
-    setInvestments(data)
+    if (data && data.length > 0) {
+      setInvestments(data)
+}
   }
 
+
   useEffect(() => {
+
     fetchInvestments()
-  }, [])
+
+    async function fetchDollar() {
+
+      const rate =
+        await getDollarRate()
+
+      setDollarRate(rate)
+  }
+
+  fetchDollar()
+
+}, [])
+
 
   const total = investments.reduce(
-    (acc, investment) =>
-      acc + Number(investment.amount),
-    0
-  )
+    (acc, investment) => {
 
+      if (investment.currency === 'ARS') {
+        return acc +
+          Number(investment.amount) /
+          dollarRate
+      }
+
+      return acc +
+        Number(investment.amount)
+
+  },
+  0
+)
   const usdTotal = investments
     .filter(
       (investment) =>
@@ -59,50 +101,30 @@ export default function Home() {
     )
 
   const arsTotal = investments
-  .filter(
-    (investment) =>
-      investment.currency === 'ARS'
-  )
-  .reduce(
-    (acc, investment) =>
-      acc + Number(investment.amount),
-    0
-  )
-
-const emergencyGoal = 10000
-
-const currentSavings = total
-
-const monthlySavings = 500
-
+    .filter(
+      (investment) =>
+        investment.currency === 'ARS'
+    )
+    .reduce(
+      (acc, investment) =>
+        acc + Number(investment.amount),
+      0
+    )
   return (
 
-    <div className="p-6">
+    <div className="p-10 text-white">
 
-       <div className="flex justify-between items-center mb-6">
+      <h1 className="text-4xl font-bold mb-6">
+        Dashboard Financiero
+      </h1>
 
-        <h1 className="text-4xl font-bold">
-          Dashboard Financiero
-        </h1>
+      <div className="mb-6">
 
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut()
-          }}
-          className="
-            bg-red-500
-            hover:bg-red-600
-            px-5
-            py-3
-            rounded-2xl
-            font-semibold
-          "
-        >
-          Logout
-        </button>
-
+    <AddInvestment
+      refreshInvestments={fetchInvestments}
+    />
       </div>
-      
+
       <div className="grid md:grid-cols-3 gap-4 mb-6">
 
         <RealMarketCard symbol="VOO" />
@@ -111,16 +133,15 @@ const monthlySavings = 500
 
         <RealMarketCard symbol="BINANCE:BTCUSDT" />
 
-        <RealMarketCard symbol="YPF" />
-
       </div>
 
       <div
         className="
-          bg-slate-800
+         bg-slate-800
           rounded-3xl
           p-6
           mb-6
+          shadow-lg
         "
       >
 
@@ -129,22 +150,37 @@ const monthlySavings = 500
         </p>
 
         <h2 className="text-5xl font-bold mt-2">
-          ${total}
+
+          USD {total.toFixed(2)}
+
         </h2>
+
+        <p className="text-slate-400 mt-3">
+
+          ARS {arsTotal.toLocaleString()}
+
+        </p>
+
+        <p className="text-slate-500 mt-1">
+
+          Dólar Blue: {dollarRate}
+
+        </p>
 
         <p className="text-green-400 mt-3">
           {investments.length} inversiones activas
         </p>
-
-      </div>
+      
+        </div>
 
       <div className="grid md:grid-cols-2 gap-4 mb-6">
 
         <div
           className="
-            bg-slate-800
+           bg-slate-800
             p-5
             rounded-3xl
+            shadow-lg
           "
         >
 
@@ -160,9 +196,10 @@ const monthlySavings = 500
 
         <div
           className="
-            bg-slate-800
+           bg-slate-800
             p-5
             rounded-3xl
+            shadow-lg
           "
         >
 
@@ -177,64 +214,12 @@ const monthlySavings = 500
         </div>
 
       </div>
-      
-      <Profile />
 
-      <div className="mb-6">
-        <PortfolioChart investments={investments} />
-      </div>
-      <div className="mb-6">
+      <PortfolioChart
+        investments={investments}
+      />
 
-  <PortfolioAnalysis
-    investments={investments}
-  />
-
-</div>
-
-<div className="mb-6">
-
-  <FinancialAdvisor
-    investments={investments}
-  />
-
-</div>
-
-<div className="mb-6">
-
-  <FinancialInsights
-    investments={investments}
-  />
-
-</div>
-      <div className="mb-6">
-
-  <GoalCard
-    title="Fondo de Emergencia"
-    current={currentSavings}
-    target={emergencyGoal}
-  />
-
-</div>
-<div
-  className="
-    bg-slate-800
-    rounded-3xl
-    p-6
-    mb-6
-  "
->
-
-  <p className="text-slate-400">
-    Ahorro Mensual
-  </p>
-
-  <h2 className="text-4xl font-bold mt-2">
-    ${monthlySavings}
-  </h2>
-
-</div>
-
-      <div className="grid gap-4">
+      <div className="mt-6">
 
         {investments.map((investment) => (
 
@@ -251,7 +236,9 @@ const monthlySavings = 500
         ))}
 
       </div>
-
+      
     </div>
+      
   )
+
 }

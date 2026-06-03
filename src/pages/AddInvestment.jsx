@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-export default function AddInvestment() {
+export default function AddInvestment({
+  refreshInvestments
+}) {
 
+  const [success, setSuccess] = useState(false)
   const [title, setTitle] = useState('')
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState('')
@@ -35,7 +38,13 @@ export default function AddInvestment() {
       return
     }
 
-    alert('Inversión guardada')
+    setSuccess(true)
+
+    setTimeout(() => {
+      setSuccess(false)
+    }, 3000)
+
+    refreshInvestments()
 
     setTitle('')
     setAmount('')
@@ -51,6 +60,23 @@ export default function AddInvestment() {
       <h1 className="text-3xl font-bold mb-6">
         Nueva Inversión
       </h1>
+
+      {success && (
+
+        <div
+          className="
+            bg-green-500
+            text-white
+            p-4
+            rounded-2xl
+            mb-4
+            shadow-lg
+          "
+        >
+          Inversión guardada 🚀
+        </div>
+
+)}
 
       <form
         onSubmit={handleSubmit}
