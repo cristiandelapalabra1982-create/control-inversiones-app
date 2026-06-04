@@ -10,8 +10,11 @@ export default defineConfig({
 
     VitePWA({
       registerType: 'autoUpdate',
-
-      manifest: {
+      devOptions: {
+       enabled: true
+      },
+      
+      manifest: { 
         name: 'Control Inversiones',
 
         short_name: 'Inversiones',
