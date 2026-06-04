@@ -114,10 +114,29 @@ const demoInvestments = [
 
     <div className="p-10 text-white">
 
-      <h1 className="text-4xl font-bold mb-6">
-        Dashboard Financiero
-      </h1>
+      <div className="flex justify-between items-center mb-6">
 
+        <h1 className="text-4xl font-bold">
+          Dashboard Financiero
+        </h1>
+
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut()
+          }}
+          className="
+            bg-red-500
+            hover:bg-red-600
+            px-5
+            py-3
+            rounded-2xl
+            font-semibold
+          "
+        >
+          Logout
+        </button>
+
+    </div>
       <div className="mb-6">
 
     <AddInvestment
