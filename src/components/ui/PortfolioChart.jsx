@@ -1,4 +1,4 @@
- import {
+import {
   PieChart,
   Pie,
   Cell,
@@ -7,7 +7,8 @@
 } from 'recharts'
 
 export default function PortfolioChart({
-  investments
+  investments,
+  title
 }) {
 
   const data = investments.map(
@@ -38,7 +39,7 @@ export default function PortfolioChart({
     >
 
       <h2 className="text-2xl font-bold mb-4">
-        Distribución Portfolio
+        {title}
       </h2>
 
       <ResponsiveContainer

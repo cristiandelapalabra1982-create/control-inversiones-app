@@ -11,6 +11,10 @@ export default function AddInvestment({
   const [currency, setCurrency] = useState('')
   const [platform, setPlatform] = useState('')
   const [category, setCategory] = useState('')
+  const [purchasePrice, setPurchasePrice] =
+    useState('')
+  const [quantity, setQuantity] =
+    useState('')
 
   async function handleSubmit(e) {
 
@@ -25,6 +29,8 @@ export default function AddInvestment({
         currency,
         platform,
         category,
+        quantity: quantity,
+        purchase_price: purchasePrice,
         user_id:
           (
             await supabase.auth.getUser()
@@ -98,6 +104,36 @@ export default function AddInvestment({
           onChange={(e) => setAmount(e.target.value)}
           className="bg-slate-800 p-4 rounded-xl"
         />
+        <input
+          type="number"
+          placeholder="Precio de compra"
+          value={purchasePrice}
+          onChange={(e) =>
+          setPurchasePrice(e.target.value)
+        }
+        className="
+          w-full
+          p-4
+          rounded-2xl
+          bg-slate-800
+          mt-4
+        "
+      />
+        <input
+          type="number"
+          placeholder="Cantidad"
+          value={quantity}
+          onChange={(e) =>
+          setQuantity(e.target.value)
+        }
+        className="
+          w-full
+          p-4
+          rounded-2xl
+          bg-slate-800
+          mt-4
+        "
+      />
 
         <input
           type="text"

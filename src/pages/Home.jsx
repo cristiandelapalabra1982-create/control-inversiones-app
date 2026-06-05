@@ -1,4 +1,6 @@
- import { useEffect, useState } from 'react'
+import { getQuote }
+from '../services/marketApi'
+import { useEffect, useState } from 'react'
 
 import { getDollarRate }
 from '../services/dollarApi'
@@ -10,28 +12,13 @@ import AddInvestment from './AddInvestment'
 
 export default function Home() {
 
-const demoInvestments = [
-  {
-    id: 1,
-    title: 'VOO',
-    amount: 1000,
-    currency: 'USD',
-    category: 'ETF'
-  },
-  {
-    id: 2,
-    title: 'BTC',
-    amount: 500,
-    currency: 'USD',
-    category: 'Cripto'
-  }
-]
-
   const [investments, setInvestments] =
-    useState(demoInvestments)
+    useState([])
 
   const [dollarRate, setDollarRate] =
     useState(1300)
+  const [marketValues, setMarketValues] =
+    useState({})
   const fetchInvestments = async () => {
 
     const user =
@@ -56,7 +43,6 @@ const demoInvestments = [
 }
   }
 
-
   useEffect(() => {
 
     fetchInvestments()
@@ -70,21 +56,70 @@ const demoInvestments = [
   }
 
   fetchDollar()
+    async function fetchMarketPrices() {
 
+      const values = {}
+
+      for (const investment of investments) {
+
+        try {
+
+          const quote =
+            await getQuote(
+              investment.title
+            )
+
+          values[investment.title] =
+            quote.price
+
+        } catch (error) {
+
+          console.log(error)
+        }
+      }
+
+  setMarketValues(values)
+}
+  fetchMarketPrices()
 }, [])
 
 
   const total = investments.reduce(
     (acc, investment) => {
 
-      if (investment.currency === 'ARS') {
-        return acc +
+      const marketPrice =
+        marketValues[
+          investment.title
+        ] || 0
+
+      const quantity =
+        Number(investment.quantity || 0)
+
+      if (
+        investment.currency === 'ARS'
+      ) {
+
+        return (
+          acc +
+          (
           Number(investment.amount) /
           dollarRate
+          )
+        )
       }
 
-      return acc +
+      if (quantity > 0) {
+
+        return (
+          acc +
+          marketPrice * quantity
+        )
+      }
+
+      return (
+        acc +
         Number(investment.amount)
+      )
 
   },
   0
@@ -114,7 +149,17 @@ const demoInvestments = [
 
     <div className="p-10 text-white">
 
-      <div className="flex justify-between items-center mb-6">
+      <div
+        className="
+          flex
+          flex-col
+          md:flex-row
+          justify-between
+          md:items-center
+          gap-4
+          mb-6
+        "
+      >
 
         <h1 className="text-4xl font-bold">
           Dashboard Financiero
@@ -208,7 +253,7 @@ const demoInvestments = [
           </p>
 
           <h3 className="text-3xl font-bold mt-2">
-            ${usdTotal}
+            ${usdTotal.toLocaleString()}
           </h3>
 
         </div>
@@ -227,16 +272,37 @@ const demoInvestments = [
           </p>
 
           <h3 className="text-3xl font-bold mt-2">
-            ${arsTotal}
+            ${arsTotal.toLocaleString()}
           </h3>
 
         </div>
 
       </div>
 
-      <PortfolioChart
-        investments={investments}
-      />
+      <div className="grid md:grid-cols-2 gap-6 mb-6">
+
+        <PortfolioChart
+          title="Portfolio USD"
+          investments={
+            investments.filter(
+              (investment) =>
+                investment.currency === 'USD'
+            )
+          }
+        />
+
+        <PortfolioChart
+          title="Portfolio ARS"
+          investments={
+            investments.filter(
+              (investment) =>
+                investment.currency === 'ARS'
+            )
+          }
+        />
+
+      </div>
+
 
       <div className="mt-6">
 
@@ -250,6 +316,13 @@ const demoInvestments = [
             category={investment.category}
             color="#4ade80"
             refreshInvestments={fetchInvestments}
+            purchasePrice={
+              investment.purchase_price
+            }
+
+            quantity={
+              investment.quantity
+            }
           />
 
         ))}
