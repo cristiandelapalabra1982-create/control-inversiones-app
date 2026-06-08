@@ -1,12 +1,12 @@
-import { getQuote }
-from '../services/marketApi'
 import { useEffect, useState } from 'react'
 
-import { getDollarRate }
+import { getDollarRates }
 from '../services/dollarApi'
 import { supabase } from '../lib/supabase'
 import RealMarketCard from '../components/ui/RealMarketCard'
 import PortfolioChart from '../components/ui/PortfolioChart'
+import PortfolioHistoryChart
+from '../components/ui/PortfolioHistoryChart'
 import InvestmentCard from '../components/ui/InvestmentCard'
 import AddInvestment from './AddInvestment'
 
@@ -15,8 +15,15 @@ export default function Home() {
   const [investments, setInvestments] =
     useState([])
 
-  const [dollarRate, setDollarRate] =
-    useState(1300)
+  const [dollarRates, setDollarRates] =
+    useState({
+
+      mep: 1200,
+      blue: 1300,
+      oficial: 1000
+
+    })
+
   const [marketValues, setMarketValues] =
     useState({})
   const fetchInvestments = async () => {
@@ -49,20 +56,66 @@ export default function Home() {
 
     async function fetchDollar() {
 
-      const rate =
-        await getDollarRate()
+      const rates =
+        await getDollarRates()
 
-      setDollarRate(rate)
-  }
+      setDollarRates(rates)
+    }
 
-  fetchDollar()
+    async function savePortfolioSnapshot() {
+
+      const user =
+        await supabase.auth.getUser()
+
+      if (!user.data.user) return
+
+      const totalProfit = investments.reduce(
+        (acc, investment) => {
+
+          const quantity =
+            Number(investment.quantity || 0)
+
+          const purchase =
+            Number(investment.purchase_price || 0)
+
+          const amount =
+            Number(investment.amount || 0)
+
+          return acc +
+            (amount - purchase) * quantity
+
+        },
+        0
+      )
+
+      await supabase
+        .from('portfolio_history')
+        .insert({
+
+          user_id:
+            user.data.user.id,
+
+          total_value: total,
+
+          total_profit: totalProfit
+        })
+    }
+
+    fetchDollar()
+
+    if (investments.length > 0) {
+
+      savePortfolioSnapshot()
+    }
     async function fetchMarketPrices() {
 
       const values = {}
 
       for (const investment of investments) {
 
-        try {
+        if (
+          investment.currency === 'USD'
+        ) {
 
           const quote =
             await getQuote(
@@ -70,22 +123,21 @@ export default function Home() {
             )
 
           values[investment.title] =
-            quote.price
-
-        } catch (error) {
-
-          console.log(error)
+            quote.price || 0
         }
+
       }
 
-  setMarketValues(values)
-}
-  fetchMarketPrices()
-}, [])
+      setMarketValues(values)
 
+    }
 
-  const total = investments.reduce(
-    (acc, investment) => {
+    fetchMarketPrices()
+    
+  }, [investments])
+
+    const total = investments.reduce(
+      (acc, investment) => {
 
       const marketPrice =
         marketValues[
@@ -103,7 +155,7 @@ export default function Home() {
           acc +
           (
           Number(investment.amount) /
-          dollarRate
+          dollarRates.mep
           )
         )
       }
@@ -145,7 +197,66 @@ export default function Home() {
         acc + Number(investment.amount),
       0
     )
-  return (
+  const totalPurchaseValue =
+    investments.reduce(
+      (acc, investment) => {
+
+        let purchaseValue =
+          Number(
+            investment.purchase_price || 0
+          ) *
+          Number(
+            investment.quantity || 0
+          )
+
+        if (
+          investment.currency === 'ARS'
+        ) {
+          purchaseValue =
+            purchaseValue / dollarRates.mep
+        }
+
+        return acc + purchaseValue
+
+      },
+      0
+    )
+
+  const totalCurrentValue =
+    investments.reduce(
+      (acc, investment) => {
+
+        let currentValue =
+          Number(investment.amount || 0)
+
+        if (
+          investment.currency === 'ARS'
+          ) {
+          currentValue =
+            currentValue / dollarRates.mep
+        }
+
+        return acc + currentValue
+
+      },
+      0
+    )
+
+  const totalProfit =
+    totalCurrentValue -
+    totalPurchaseValue
+
+  const totalProfitPercent =
+    totalPurchaseValue > 0
+      ? (
+          (
+            totalProfit /
+            totalPurchaseValue
+          ) * 100
+        )
+      : 0
+
+    return (
 
     <div className="p-10 text-white">
 
@@ -225,14 +336,62 @@ export default function Home() {
 
         </p>
 
-        <p className="text-slate-500 mt-1">
+        <div className="mt-3 space-y-1">
 
-          Dólar Blue: {dollarRate}
+          <p className="text-slate-400">
+
+            Dólar MEP:
+            {' '}
+            {dollarRates.mep}
+
+          </p>
+
+        <p className="text-slate-400">
+
+            Dólar Blue:
+            {' '}
+            {dollarRates.blue}
 
         </p>
 
+        <p className="text-slate-400">
+
+            Dólar Oficial:
+            {' '}
+          {dollarRates.oficial}
+
+        </p>
+
+      </div>
+
         <p className="text-green-400 mt-3">
           {investments.length} inversiones activas
+        </p>
+
+        <p
+          className={`
+            mt-3
+            text-xl
+            font-bold
+            ${
+              totalProfit >= 0
+              ? 'text-green-400'
+              : 'text-red-400'
+            }
+          `}
+        >
+
+          {totalProfit >= 0 ? '+' : ''}
+
+          USD
+          {' '}
+          {totalProfit.toFixed(2)}
+
+          {' '}
+          (
+          {totalProfitPercent.toFixed(2)}
+          %)
+
         </p>
       
         </div>
@@ -303,6 +462,11 @@ export default function Home() {
 
       </div>
 
+      <div className="mb-6">
+
+        <PortfolioHistoryChart />
+
+      </div>
 
       <div className="mt-6">
 
